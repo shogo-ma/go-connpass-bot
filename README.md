@@ -6,3 +6,5 @@ This is the slack bot for event search of connpass.
 ```
 $ go get -u github.com/shogo-ma/go-connpass-bot
 ```
+
+## Usage

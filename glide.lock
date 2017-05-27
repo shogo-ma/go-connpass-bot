@@ -1,6 +1,8 @@
-hash: d4edc841a2a6dcb7d46b7344eb2991ab4e9ed40cb7a76eff17b90e839b0af8eb
-updated: 2017-05-21T00:25:27.635837764+09:00
+hash: 524198be70662b94a260819a1a9015d1c32162b49d3da06393a7c8d27e20b5e1
+updated: 2017-05-27T22:21:49.430341008+09:00
 imports:
+- name: github.com/franela/goreq
+  version: b5b0f5eb2d16f20345cce0a544a75163579c0b00
 - name: github.com/nlopes/slack
   version: 3e8aa5655be613e1d4ce0b740993bb734a2b0f7b
 - name: golang.org/x/net

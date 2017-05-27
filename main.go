@@ -7,7 +7,10 @@ import (
 	"strings"
 
 	"github.com/nlopes/slack"
+	"github.com/shogo-ma/go-connpas-bot/models"
 )
+
+const eventNum = 10
 
 type SlackBot struct {
 	api  *slack.Client
@@ -40,15 +43,41 @@ show:
 	return nil
 }
 
-func (bot *SlackBot) show() error {
+func (bot *SlackBot) events(channel string) error {
+	cps, err := models.Request(
+		&models.Params{
+			Count: eventNum,
+			Order: 3, // latest
+		})
+
+	if err != nil {
+		return err
+	}
+
+	contents := "```"
+	for _, event := range cps.Events {
+		contents += event.Title + "\n"
+	}
+	contents += "```"
+
+	bot.rtm.SendMessage(
+		bot.rtm.NewOutgoingMessage(
+			contents,
+			channel,
+		),
+	)
+
 	return nil
 }
 
 func (bot *SlackBot) handleResponse(text, channel string) {
 	if strings.Contains(text, "help") {
 		bot.help(channel)
-	} else if text == "show" {
-		bot.rtm.SendMessage(bot.rtm.NewOutgoingMessage(text, channel))
+	} else if strings.Contains(text, "events") {
+		err := bot.events(channel)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -86,7 +115,7 @@ func run(api *slack.Client) int {
 			}
 
 		case *slack.InvalidAuthEvent:
-			log.Println("Invalid credentials")
+			log.Println("Invalid Credentials")
 			return 1
 		}
 	}
