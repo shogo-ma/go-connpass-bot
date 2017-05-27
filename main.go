@@ -30,8 +30,8 @@ func (bot *SlackBot) help(channel string) error {
 	contents := "```" + `
 help:
 	help
-show:
-	return resent events from connpass` + "```"
+events [word]:
+	return recent events from connpass` + "```"
 
 	bot.rtm.SendMessage(
 		bot.rtm.NewOutgoingMessage(
@@ -43,29 +43,42 @@ show:
 	return nil
 }
 
-func (bot *SlackBot) events(channel string) error {
+func (bot *SlackBot) events(text, channel string) error {
+	// make search query
+	qs := strings.Split(text, " ")
+	fmt.Println(qs)
+
+	var keyword string
+	search_word := qs[len(qs)-1]
+	if search_word == "events" {
+		keyword = ""
+	} else {
+		keyword = search_word
+	}
+
 	cps, err := models.Request(
 		&models.Params{
-			Count: eventNum,
-			Order: 3, // latest
+			Keyword: keyword,
+			Count:   eventNum,
+			Order:   3, // latest
 		})
 
 	if err != nil {
 		return err
 	}
 
-	contents := "```"
 	for _, event := range cps.Events {
-		contents += event.Title + "\n"
+		contents := fmt.Sprintf("%s\n%s\n",
+			event.Title,
+			event.EventURL,
+		)
+		bot.rtm.SendMessage(
+			bot.rtm.NewOutgoingMessage(
+				contents,
+				channel,
+			),
+		)
 	}
-	contents += "```"
-
-	bot.rtm.SendMessage(
-		bot.rtm.NewOutgoingMessage(
-			contents,
-			channel,
-		),
-	)
 
 	return nil
 }
@@ -74,7 +87,7 @@ func (bot *SlackBot) handleResponse(text, channel string) {
 	if strings.Contains(text, "help") {
 		bot.help(channel)
 	} else if strings.Contains(text, "events") {
-		err := bot.events(channel)
+		err := bot.events(text, channel)
 		if err != nil {
 			panic(err)
 		}
