@@ -26,19 +26,20 @@ func NewSlackBot(api *slack.Client) *SlackBot {
 	}
 }
 
-func (bot *SlackBot) help(channel string) error {
+func (bot *SlackBot) help(user, channel string) error {
 	contents := "```" + `
 help:
 	help
 events [word]:
 	return recent events from connpass` + "```"
 
+	bot.sendMessage(fmt.Sprintf("<@%s>", user), channel)
 	bot.sendMessage(contents, channel)
 
 	return nil
 }
 
-func (bot *SlackBot) events(text, channel string) error {
+func (bot *SlackBot) events(user, text, channel string) error {
 	// make search query
 	qs := strings.Split(text, " ")
 	fmt.Println(qs)
@@ -62,6 +63,8 @@ func (bot *SlackBot) events(text, channel string) error {
 		return err
 	}
 
+	// mention
+	bot.sendMessage(fmt.Sprintf("<@%s>", user), channel)
 	for _, event := range cps.Events {
 		contents := fmt.Sprintf("%s\n%s\n",
 			event.Title,
@@ -73,8 +76,8 @@ func (bot *SlackBot) events(text, channel string) error {
 	return nil
 }
 
-func (bot *SlackBot) notFound(channel string) {
-	contents := "Command Not Found"
+func (bot *SlackBot) notFound(user, channel string) {
+	contents := fmt.Sprintf("<@%s> Command Not Found", user)
 	bot.sendMessage(contents, channel)
 }
 
@@ -87,16 +90,16 @@ func (bot *SlackBot) sendMessage(contents, channel string) {
 	)
 }
 
-func (bot *SlackBot) handleResponse(text, channel string) {
+func (bot *SlackBot) handleResponse(text, channel, user string) {
 	if strings.Contains(text, "help") {
-		bot.help(channel)
+		bot.help(user, channel)
 	} else if strings.Contains(text, "events") {
-		err := bot.events(text, channel)
+		err := bot.events(user, text, channel)
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		bot.notFound(channel)
+		bot.notFound(user, channel)
 	}
 }
 
@@ -130,7 +133,7 @@ func run(api *slack.Client) int {
 
 		case *slack.MessageEvent:
 			if ev.Type == "message" && slack_bot.IsMention(ev.Text) {
-				slack_bot.handleResponse(ev.Text, ev.Channel)
+				slack_bot.handleResponse(ev.Text, ev.Channel, ev.User)
 			}
 
 		case *slack.InvalidAuthEvent:
