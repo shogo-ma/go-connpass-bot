@@ -1,15 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/nlopes/slack"
 )
 
 type SlackBot struct {
-	api *slack.Client
-	rtm *slack.RTM
+	api  *slack.Client
+	rtm  *slack.RTM
+	ID   string
+	Name string
 }
 
 func NewSlackBot(api *slack.Client) *SlackBot {
@@ -41,11 +45,25 @@ func (bot *SlackBot) show() error {
 }
 
 func (bot *SlackBot) handleResponse(text, channel string) {
-	if text == "help" {
+	if strings.Contains(text, "help") {
 		bot.help(channel)
 	} else if text == "show" {
 		bot.rtm.SendMessage(bot.rtm.NewOutgoingMessage(text, channel))
 	}
+}
+
+func (bot *SlackBot) SetBotProfile(id, name string) {
+	bot.ID = id
+	bot.Name = name
+}
+
+func (bot *SlackBot) IsMention(text string) bool {
+	bot_name := fmt.Sprintf("<@%s>", bot.ID)
+	if strings.Contains(text, bot_name) {
+		return true
+	}
+
+	return false
 }
 
 func run(api *slack.Client) int {
@@ -56,8 +74,14 @@ func run(api *slack.Client) int {
 
 	for msg := range slack_bot.rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
+		case *slack.ConnectedEvent:
+			slack_bot.SetBotProfile(
+				ev.Info.User.ID,
+				ev.Info.User.Name,
+			)
+
 		case *slack.MessageEvent:
-			if ev.Type == "message" {
+			if ev.Type == "message" && slack_bot.IsMention(ev.Text) {
 				slack_bot.handleResponse(ev.Text, ev.Channel)
 			}
 
