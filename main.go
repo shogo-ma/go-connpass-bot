@@ -54,18 +54,18 @@ func (bot *SlackBot) events(channel string) error {
 		return err
 	}
 
-	contents := "```"
 	for _, event := range cps.Events {
-		contents += event.Title + "\n"
+		contents := fmt.Sprintf("%s\n%s\n",
+			event.Title,
+			event.EventURL,
+		)
+		bot.rtm.SendMessage(
+			bot.rtm.NewOutgoingMessage(
+				contents,
+				channel,
+			),
+		)
 	}
-	contents += "```"
-
-	bot.rtm.SendMessage(
-		bot.rtm.NewOutgoingMessage(
-			contents,
-			channel,
-		),
-	)
 
 	return nil
 }
