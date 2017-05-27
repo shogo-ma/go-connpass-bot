@@ -33,12 +33,7 @@ help:
 events [word]:
 	return recent events from connpass` + "```"
 
-	bot.rtm.SendMessage(
-		bot.rtm.NewOutgoingMessage(
-			contents,
-			channel,
-		),
-	)
+	bot.sendMessage(contents, channel)
 
 	return nil
 }
@@ -72,15 +67,24 @@ func (bot *SlackBot) events(text, channel string) error {
 			event.Title,
 			event.EventURL,
 		)
-		bot.rtm.SendMessage(
-			bot.rtm.NewOutgoingMessage(
-				contents,
-				channel,
-			),
-		)
+		bot.sendMessage(contents, channel)
 	}
 
 	return nil
+}
+
+func (bot *SlackBot) notFound(channel string) {
+	contents := "Command Not Found"
+	bot.sendMessage(contents, channel)
+}
+
+func (bot *SlackBot) sendMessage(contents, channel string) {
+	bot.rtm.SendMessage(
+		bot.rtm.NewOutgoingMessage(
+			contents,
+			channel,
+		),
+	)
 }
 
 func (bot *SlackBot) handleResponse(text, channel string) {
@@ -91,6 +95,8 @@ func (bot *SlackBot) handleResponse(text, channel string) {
 		if err != nil {
 			panic(err)
 		}
+	} else {
+		bot.notFound(channel)
 	}
 }
 
