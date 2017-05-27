@@ -2,3 +2,7 @@ package: github.com/shogo-ma/go-connpas-bot
 import:
 - package: github.com/nlopes/slack
   version: ~0.0.1
+- package: golang.org/x/net
+  subpackages:
+  - websocket
+- package: github.com/franela/goreq
